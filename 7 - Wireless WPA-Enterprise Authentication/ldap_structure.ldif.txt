@@ -1,0 +1,65 @@
+dn: ou=staff,dc=ltacademy,dc=com
+objectClass: organizationalUnit
+ou: staff
+
+dn: ou=groups,ou=staff,dc=ltacademy,dc=com
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=user01, ou=staff, dc=ltacademy,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: top
+cn: User1
+sn: LT1
+displayName: User1
+mail: user01@ltacademy.com
+userPassword: {SSHA}J7FzRoOrA4shCoQCx93CTlVoLKlYdcAz
+
+
+dn: uid=user02, ou=staff, dc=ltacademy,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: top
+cn: User2
+sn: LT2
+displayName: User2
+mail: user02@ltacademy.com
+userPassword: {SSHA}fyrukwimW4nrSLf9iKj/yaLZyDhHkzK+
+
+
+dn: uid=user03, ou=staff, dc=ltacademy,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: top
+cn: User3
+sn: LT1
+displayName: User3
+mail: user03@ltacademy.com
+userPassword: {SSHA}ShCKBaEikjx+xsxbYnd6Waz9pF5/9Tic
+
+
+dn: uid=user04, ou=staff, dc=ltacademy,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: top
+cn: User4
+sn: LT1
+displayName: User4
+mail: user04@ltacademy.com
+userPassword: {SSHA}cMcJzyLHsraaRWyabt2j9c9RKnM1c3lZ
+
+
+dn: cn=eng,ou=groups, ou=staff,dc=ltacademy,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: eng
+member: uid=user01, ou=staff, dc=ltacademy,dc=com
+member: uid=user02, ou=staff, dc=ltacademy,dc=com
+
+dn: cn=sales,ou=groups, ou=staff,dc=ltacademy,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: sales
+member: uid=user03, ou=staff, dc=ltacademy,dc=com
+member: uid=user04, ou=staff, dc=ltacademy,dc=com
