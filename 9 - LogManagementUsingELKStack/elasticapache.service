@@ -1,0 +1,14 @@
+[Unit]
+Description=Logging directly to the elasticsearch
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=poorna2152
+ExecStart=/usr/bin/python3 /home/poorna2152/test
+
+[Install]
+WantedBy=multi-user.target

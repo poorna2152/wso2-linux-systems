@@ -1,0 +1,68 @@
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+from datetime import datetime
+from datetime import date
+from elasticsearch import Elasticsearch
+
+es = Elasticsearch("34.132.134.230:9200")
+class Watcher:
+    def __init__(self):
+        self.observer = Observer()
+
+    def run(self):
+        event_handler = Handler()
+        observers = []
+        paths = ["/var/log/apache2/access.log","/var/log/apache2/error.log","/var/log/syslog"]
+
+        # Iterate through paths and attach observers
+        for path in paths:
+            self.observer.schedule(event_handler, path)
+            observers.append(self.observer)
+
+        self.observer.start()
+
+        try:
+            while True:
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+            for o in observers:
+                o.unschedule_all()
+                o.stop()
+
+        for o in observers:
+            o.join()
+            
+        
+
+
+class Handler(FileSystemEventHandler):
+
+    @staticmethod
+    def on_any_event(event):
+        if event.is_directory:
+            return None
+        elif event.event_type == 'modified':
+            last_line = ""
+            print(event.src_path)
+            with open(event.src_path) as f:
+                for line in f:
+                    pass
+                last_line = line
+            doc = {
+                'host':{'name':'lt-2021-031-aws'},
+                'clientip':'34.70.14.76',
+                'message': last_line,
+                'timestamp': datetime.now()
+                }
+            res = es.index(index="apache-"+str(date.today().strftime("%Y.%m.%d")),body=doc)            
+
+            print(res['result'])
+            #print(last_line)
+            # Taken any action here when a file is modified.
+
+if __name__ == '__main__':
+    w = Watcher()
+    w.run()
+
