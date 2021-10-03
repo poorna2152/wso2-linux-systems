@@ -1,0 +1,110 @@
+---
+- name: Create Compute Engine instances
+  hosts: localhost
+  gather_facts: no
+  vars:
+    gcp_project: prefab-gift-319008
+    gcp_cred_kind: serviceaccount
+    gcp_cred_file: account.json
+    zone: "us-central1-a"
+    region: "us-central1"
+    ssh_path: /home/poorna2152/.ssh/id_rsa.pub
+    ssh_user: poorna2152
+    machine_type: "n1-standard-1"
+    image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts"
+    servers: 
+      - lt-server-1
+      - lt-server-2
+  tasks:
+    - name: Create instances
+      gcp_compute_address:
+        name: "{{ item }}"
+        region: "{{ region }}"
+        project: "{{ gcp_project }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+      register: gce_ip
+      loop: "{{ servers }}"
+
+    - name: Bring up the instance in the zone.
+      gcp_compute_instance:
+        name: "{{ item.name }}"
+        machine_type: "{{ machine_type }}"
+        disks:
+          - auto_delete: true
+            boot: true
+            initialize_params:
+              source_image: "{{ image }}"
+              disk_size_gb: 30
+        network_interfaces:
+          - access_configs:
+              - name: External NAT
+                nat_ip: "{{ item }}"
+                type: ONE_TO_ONE_NAT
+        tags:
+          items:
+            - http-server
+            - https-server
+        zone: "{{ zone }}"
+        project: "{{ gcp_project }}"
+        service_account_file: "{{ gcp_cred_file }}"
+        auth_kind: "{{ gcp_cred_kind }}"
+      register: gce
+      with_items: "{{ gce_ip.results }}"
+
+    - name: Wait for SSH for instance
+      become: yes
+      become_method: sudo
+      wait_for: delay=5 sleep=5 host={{ item.address }} port=22 state=started timeout=100
+      loop: "{{ gce_ip.results }}"
+    - name: Save host data for first zone
+      add_host: hostname={{ item.address }} groupname=gce_instances_ips
+      loop: "{{ gce_ip.results }}"    
+    - name: Write to hosts file
+      become: yes
+      become_method: sudo
+      lineinfile:
+        path: /etc/ansible/hosts
+        line: "{{ item.name }} ansible_host={{ item.address }} ansible_ssh_private_key_file={{  ssh_path  }} ansible_user={{ ssh_user  }}"
+      loop: "{{ gce_ip.results }}"
+
+- name: Install Apache 2
+  hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        update_cache: yes
+        state: latest
+
+    - name: start the service
+      service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: install ufw
+      apt:
+        name: ufw
+        update_cache: yes
+        state: latest
+
+    - name: allow  firewall
+      ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+
+    - name: copy index.j2 file
+      copy:
+        src: ./index.j2
+        dest: /var/www/html/index.html
+      notify: restart apache
+
+  handlers:
+    - name: restart apache
+      service:
+        name: apache2
+        state: restarted
